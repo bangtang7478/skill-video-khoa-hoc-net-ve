@@ -23,7 +23,10 @@ Script kèm theo:
 - `skills/giong-doc-phu-de-karaoke/scripts/phu_de_karaoke.py`: tạo phụ đề karaoke từ kịch bản + audio.
 - `skills/dung-video-khoa-hoc/scripts/build_video.py`: ghép ảnh + giọng + phụ đề + nhạc thành video.
 
-## Cài đặt
+## Chạy trên n8n
+Thư mục [n8n/](n8n/README.md) có workflow import được vào n8n, chạy toàn bộ quy trình (Claude viết kịch bản → JSON2Video vẽ tranh, lồng tiếng, phụ đề → đăng YouTube) mà không cần cài gì trên máy.
+
+## Cài đặt (Claude Code / claude.ai)
 **Claude Code**: chép các thư mục trong `skills/` vào `~/.claude/skills/` (hoặc `.claude/skills/` của dự án):
 ```bash
 git clone https://github.com/bangtang7478/skill-video-khoa-hoc-net-ve
