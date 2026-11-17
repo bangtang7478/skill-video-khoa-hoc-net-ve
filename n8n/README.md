@@ -1,33 +1,38 @@
-# Chạy trên n8n
+# Chạy bộ skill trên n8n Cloud (không dùng JSON2Video)
 
-Workflow **"Video khoa hoc net ve + dang YouTube"** làm toàn bộ quy trình của bộ skill ngay trên n8n, không cần máy có ffmpeg:
+Workflow **"Video khoa hoc net ve (skill GitHub, khong JSON2Video)"** chạy toàn bộ quy trình của bộ skill trong repo này trên n8n Cloud.
 
-`Form/Webhook → Claude viết kịch bản 6 nhịp (JSON) → dựng JSON video → JSON2Video (vẽ tranh flux-schnell, giọng Azure tiếng Việt, tiêu đề đỏ/banner, phụ đề 3 chữ chữ đang đọc xanh lá) → chờ render → đăng YouTube`
+## Cách hoạt động
+1. **Lay skill tu GitHub**: mỗi lần chạy tải `SKILL.md` mới nhất từ thư mục `skills/` của repo này
+   (tổng quát, kịch bản, vẽ tranh, giọng đọc). Sửa skill trên GitHub là lần chạy sau dùng bản mới.
+   Khối STYLE lấy thẳng từ mục "Khóa phong cách" của skill vẽ tranh.
+2. **Claude viet kich ban theo skill**: Claude đọc các skill và làm gộp bước 1 đến 4 (tiêu đề, kịch bản 6 nhịp, chia cảnh,
+   prompt ảnh, lời đọc đã chuẩn hóa), trả về JSON.
+3. **Ve anh / Doc giong**: gọi API inference.sh (Nano Banana 2 vẽ tranh 16:9, ElevenLabs đọc giọng) cho từng cảnh.
+4. **Dung clip tung canh → Ghep clip**: FFmpeg Micro dựng mỗi cảnh thành clip (ảnh + giọng + phụ đề), rồi ghép theo nhóm 10 clip.
+5. **Dang len YouTube** (tùy chọn): tải video về và đăng với tiêu đề, mô tả có nguồn, nhãn AI.
 
-## File
-| File | Dùng để |
-|---|---|
-| `video-khoa-hoc-net-ve.n8n.json` | Import vào n8n: Workflows → Import from File |
-| `video-khoa-hoc-net-ve.workflow-sdk.ts` | Cùng workflow viết bằng n8n Workflow SDK (cho MCP/AI builder) |
-| `prompt.txt` | Prompt cho Claude viết kịch bản |
-| `dung_json.js` | Code node dựng JSON video, có mục **TÙY CHỈNH** (linh vật, màu, font, nhạc nền) |
-| `chuan_hoa.js`, `gioi_han.js` | Code node chuẩn hóa đầu vào và giới hạn thời gian chờ |
+## Cần chuẩn bị
+- Gói n8n Cloud còn hạn (bản dùng thử hết hạn thì không chạy được).
+- 2 credential kiểu Custom Auth, nội dung `{"headers":{"Authorization":"Bearer <key>"}}`:
+  - `inference.sh API key` (key `inf_...` tại inference.sh)
+  - `FFmpeg Micro API key` (tại ffmpeg-micro.com, dịch vụ trả phí theo phút xử lý)
+- Credential YouTube nếu muốn tự đăng.
 
-## Cần chuẩn bị sau khi import
-1. **Claude**: chọn credential Anthropic cho node *Claude Chat Model* (hoặc dùng AI credits có sẵn của n8n Cloud).
-2. **JSON2Video**: tạo credential *Header Auth* tên header `x-api-key`, giá trị là API key JSON2Video; gán cho 2 node *Gui tao video* và *Kiem tra video*.
-3. **YouTube**: gán credential YouTube OAuth2 cho node *Dang len YouTube*. Mặc định đăng **Riêng tư**.
-4. (Tùy chọn) Dán link .mp3 nhạc nền vào `NHAC_NEN` trong node *Dung JSON video*, đổi `LINH_VAT` thành linh vật riêng của kênh.
-
-## Chạy
-- Mở Form (URL ở node *Form nhap chu de*), hoặc gọi webhook:
+## Gọi bằng webhook
 ```bash
-curl -X POST https://<n8n-cua-ban>/webhook/tao-video-khoa-hoc-net-ve \
+curl -X POST https://<instance>.app.n8n.cloud/webhook/video-khoa-hoc-skill-github \
   -H 'Content-Type: application/json' \
   -d '{"chuDe":"Vì sao ta ngáp lây?","thoiLuong":2,"giong":"nam","youtube":"private"}'
 ```
-`youtube`: `public` | `unlisted` | `private` | `khong` (không đăng). Video 2 phút mất khoảng 5–15 phút.
+`youtube`: `public` | `unlisted` | `private` | `khong`.
 
-## Giới hạn so với bản chạy bằng script
-- Ảnh do flux-schnell vẽ nên linh vật có thể lệch nhẹ giữa các cảnh (không truyền được ảnh tham chiếu). Muốn đồng nhất hơn, thay bằng model ảnh có tham chiếu (Nano Banana, GPT Image) qua HTTP Request rồi đưa URL ảnh vào trường `src`.
-- Chữ trong tranh được chèn bằng lớp text của JSON2Video (không để model ảnh viết chữ), nên dấu tiếng Việt luôn đúng.
+## Giới hạn so với chạy bằng script trên máy
+- FFmpeg Micro không cho `-filter_complex`, nên phụ đề hiện **cả câu**, không phải karaoke từng chữ như `phu_de_karaoke.py`.
+- Không có Python trên n8n Cloud nên không chạy được `them_chu.py`; chữ tiếng Việt trong tranh do model ảnh vẽ, có thể sai dấu.
+- Không có nhạc nền và zoom nhẹ như `build_video.py`.
+Muốn đúng 100% phong cách, chạy các script trong `skills/*/scripts/` trên máy có ffmpeg và Python.
+
+## Tệp
+- `video-khoa-hoc-skill-github.workflow-sdk.ts`: mã workflow (n8n Workflow SDK).
+- `code/*.js`: mã các node Code, `prompt.txt`: prompt cho Claude.

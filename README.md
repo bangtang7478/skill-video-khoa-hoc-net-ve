@@ -24,7 +24,7 @@ Script kèm theo:
 - `skills/dung-video-khoa-hoc/scripts/build_video.py`: ghép ảnh + giọng + phụ đề + nhạc thành video.
 
 ## Chạy trên n8n
-Thư mục [n8n/](n8n/README.md) có workflow import được vào n8n, chạy toàn bộ quy trình (Claude viết kịch bản → JSON2Video vẽ tranh, lồng tiếng, phụ đề → đăng YouTube) mà không cần cài gì trên máy.
+Thư mục [n8n/](n8n/README.md) có workflow chạy trên n8n Cloud: tải bộ skill này từ GitHub, Claude viết kịch bản theo skill, inference.sh vẽ tranh và đọc giọng, FFmpeg Micro dựng video, rồi đăng YouTube. Không dùng JSON2Video.
 
 ## Cài đặt (Claude Code / claude.ai)
 **Claude Code**: chép các thư mục trong `skills/` vào `~/.claude/skills/` (hoặc `.claude/skills/` của dự án):
